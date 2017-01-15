@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html prefix="og: http://ogp.me/ns#" xmlns:fb="http://ogp.me/ns/fb#">
+<head>
+<meta charset="utf-8" />
+<title>Test VK Share</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<script type='text/javascript' src="./js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="https://vk.com/js/api/share.js?93" charset="windows-1251"></script>
+
+<script language='JavaScript' type='text/javascript'>
+	$(document).ready(function() {
+        $('a.vkshare').click( function() {
+            //imageSource = 'http://www3.amit.ru/r-800.jpg';
+			imageSource = 'https://flash.u-fun.ru//upload/img/store/0/1482124382841.jpg';
+			var newImageUrl = resizeImage(imageSource);
+			var myurl='http://vk.com/share.php?url='+'http://flash.u-fun.ru/product/059aec29be4045a9afb1227022d0d932.html'+'&image=' + newImageUrl + '&noparse=true';
+			return window.open(myurl,'Поделиться','width=800,height=800,resizable=yes,scrollbars=yes,status=yes');
+        });
+		
+	}); 
+</script>
+
+</head>
+<body>
+<header>
+
+</header>
+
+<section id="content_main">
+
+<br>
+			<div class="share">
+				Поделиться
+				<a class="vkshare" style="width: 20px;
+height: 16px; 
+position: relative;
+top: 1px; " href="" onclick="return false;"><img src="./img/my_vk.png" alt=""></a>
+				<a onclick="window.open('https://twitter.com/intent/tweet?url='+location.href, 'Поделиться','width=640,height=480,resizable=yes,scrollbars=yes,status=yes'); return false;" href = ""><img src="./img/twitter.png" alt=""></a>
+				<a  class="social-btn" href="#" onclick="window.open('http://www.odnoklassniki.ru/dk?st.cmd=addShare&amp;st.s=1&amp;st._surl='+location.href, 'Поделиться','width=640,height=480,resizable=yes,scrollbars=yes,status=yes'); return false;" href = ""><img src="./img/ok.png" alt=""></a>
+				<a style="margin-right: 0px; position: relative; top: -1px;" onclick="window.open('http://connect.mail.ru/share?url='+location.href, 'Поделиться','width=21px,height=18px,resizable=yes,scrollbars=yes,status=yes'); return false;"href = ""><img src="./img/mail_ru.png" alt=""></a>
+			</div>
+
+</section>
+
+<script>
+    function returnOK(messageOK) {
+		alert("messageOK=" + messageOK);
+    }
+
+    function resizeImage(urlImage) {
+        //var orderId = $("input[name='order_Id']").val();
+        //var cityId = $('#city_id').val();
+		var result = "";
+
+		var jqXHR = $.ajax({
+            url: 'http://www3.amit.ru/resize/index.php?url=' + urlImage,
+            type: 'get',
+            //data: {'url': urlImage},
+			async: false,
+            dataType: 'json',
+            success: function (data) {
+                //parent.layer.msg('Запрос успешно выполнен', {icon: 1}, returnOK(data.resizeImageURL));
+				result = data.resizeImageURL;
+            }, error: function (data, status) {
+                //parent.layer.msg('Сбой связи', {icon: 2});
+				result = status;
+            }
+        });
+		return result;
+	}
+
+
+</script>
+
+
+</body>
+
+</html>
