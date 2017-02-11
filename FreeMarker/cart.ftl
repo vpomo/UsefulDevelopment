@@ -218,8 +218,8 @@ if ($('#password').get(0).type=='password') $('#password').get(0).type='text'; e
 			
 				<a href="#"><img src=${imgServer}${cart.goodsImages} height="108px" width="84px"></a>
 			</div>
-			
-			<div class="goods_in_cart">
+			<style>.expos{position:relative; top:7px}</style>
+			<div class="goods_in_cart" style="background-color: #fff;">
 				<div class="text_button_info">
 				${cart.specInfo}
 				<a onclick="showGoodsInfo('${cart.goodsId}','${cart.specId}','${cart.goodsNum}','${cart.cartId}');" href="#" id="edit_button${cart.cartId}" class="edit_button"><img src="${base}/res_v4.0/kusto/images_basket/pensil.png" height="16px" width="16px">Редактировать</a>
@@ -327,7 +327,7 @@ if ($('#password').get(0).type=='password') $('#password').get(0).type='text'; e
 
 <Script>
     function showGoodsInfo(goodsId, scecId, goodsNum, cartId) {
-        $( '#row1_div'+cartId ).css({"height":"270px","border":"3px solid red"});
+        $( '#row1_div'+cartId ).css({"height":"270px","border":"3px solid #bfbaba"});
         $("#goodsId").val(goodsId);
         $("#goodsSpecId").val(scecId);
         $("#quantity").val(goodsNum);
@@ -357,7 +357,7 @@ if ($('#password').get(0).type=='password') $('#password').get(0).type='text'; e
                     success: function (data) {
                         if (data.success) {
                             location.reload();
-                            layer.alert(data.msg, {icon: 1, time: 2000, closeBtn: 0});
+                            //layer.alert(data.msg, {icon: 1, time: 2000, closeBtn: 0});
                         }
                     },error:function(data){
                         layer.msg('Сбой связи', {icon: 2});

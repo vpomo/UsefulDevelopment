@@ -14,6 +14,8 @@
 
     <link href="${base}/res_v4.0/CDN/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
     <link href="${base}/res_v4.0/CDN/css/bootstrap-theme.min.css" rel="stylesheet" type="text/css"/>
+    <link href="${base}/res_v4.0/CDN/css/select2.min.css" rel="stylesheet" type="text/css"/>
+
     <link href="${base}/res_v4.0/css/jquery-ui-1.8.21.custom.css" rel="stylesheet" type="text/css"/>
 
     <script src="${base}/res_v4.0/js/jquery-1.9.1.min.js" type="text/javascript"></script>
@@ -26,11 +28,13 @@
     <script src="${base}/res_v4.0/js/common_js.js" type="text/javascript"></script>
     <script src="${base}/res_v4.0/js/cart/cart.js" type="text/javascript" charset="utf-8"></script>
     <script src="${base}/res_v4.0/js/cart/area_array.js" type="text/javascript" charset="utf-8"></script>
+    <script src="${base}/res_v4.0/CDN/js/select2.full.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="${base}/res_v4.0/CDN/js/bootstrap.min.js" type="text/javascript" charset="utf-8"></script>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-  <!-- <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script> -->
+ 
   <link rel="stylesheet" type="text/css" href="${base}/res_v4.0/kusto/css/zakaz.css">
   <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
   <title>Оформить заказ</title>
@@ -43,6 +47,7 @@
 		font-family: MuseoSansLight;
 		src: url(${base}/res_v4.0/kusto/fonts/MuseoSansLight.ttf);
 	   }
+	   .layui-layer-dialog .layui-layer-content {color:#fff !important}
   </style> 
  </head>
 <#assign memberInfoTag =newTag("memberInfoTag")>
@@ -57,7 +62,20 @@
 		top: 135px !important ;
 		left: 267px !important;
 	}
-	</style>
+    .list-pvz {
+        font-size: 12px !important;
+        width: 230px;
+        height: 16px;
+    }
+    .button_code_pvz {
+        height: 35px;
+        width: 228px;
+        float: left;
+        font-size: 12pt;
+        margin: 36px 2px 0px 10px;
+    }
+
+    </style>
     
 	<div class="main_div"> 
 		<div class="zakaz_title" name="zakaz_title">
@@ -208,7 +226,21 @@ $(function() {
 					</div>
 					</div>
 					</a>
-				</div>
+
+                    <div style="top: 0px; right: 50px;" class="sposob_dostavki">
+                        ВЫБЕРИТЕ ПУНКТ ВЫДАЧИ ЗАКАЗА::
+                    </div>
+                        <div class="button_code_pvz">
+                            <div class="inner_input_data2">
+                                <select class="list-pvz">
+                                    <!--  <option value="3620194" selected="selected">select2/select2</option>  -->
+                                </select>
+                            </div>
+                        </div>
+
+
+
+                </div>
 			</div>
 			<div style="position:absolute; top:269px;">
 				<div style="top: 0px;" class="sposob_dostavki">
@@ -231,13 +263,10 @@ $(function() {
 					</div>
 					</div>
 					</a>
-					
-					
 				</div>
-			
 			</div>
-			
-			<div class="rows4">
+
+            <div class="rows4">
 			</div>
 			
 			</div>
@@ -415,7 +444,7 @@ $(function() {
             $("#cityX").autocomplete({
                 source: function (request, response) {
                     $.ajax({
-                        url: "http://api.cdek.ru/city/getListByTerm/jsonp.php?callback=?",
+                        url: "https://api.cdek.ru/city/getListByTerm/jsonp.php?callback=?",
                         dataType: "jsonp",
                         data: {
                             q: function () {
@@ -440,6 +469,39 @@ $(function() {
                 minLength: 1,
                 select: function (event, ui) {
                     delivery2(ui.item.id, ui.item.label);
+                }
+            });
+
+            $(".list-pvz").select2({
+                language: "ru",
+                placeholder: "Начните вводить данные ...",
+                tags: true,
+                multiple: false,
+                tokenSeparators: [',', ' '],
+                minimumInputLength: 0,
+                minimumResultsForSearch: 10,
+                ajax: {
+                    url: '/cdek/allpvz?cityId=' + $('#city_id').val(),
+                    dataType: "json",
+                    type: "GET",
+                    data: function (params) {
+
+                        var queryParameters = {
+                            term: params.term
+                        }
+                        return queryParameters;
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (item) {
+                                return {
+                                    text: item.namePvz + " " + item.address + " тел.:" + item.phone,
+                                    id: item.codePvz
+                                }
+                            })
+                        };
+                    },
+                    cache: false
                 }
             });
 
@@ -906,10 +968,18 @@ $(function() {
                     return false;
                 }
 				if ($('#shipselect').val() == "") { //判断商品是否存在 
-					layer.msg("Выберите способ доставки!");
+					layer.msg("Выберите способ доставки!",false,999999);
 					return false;
                 }
-				if ($("#payselect").val() == "") { //判断商品是否存在 
+
+                var codePvz = $(".list-pvz").val();
+                if (($('#shipselect').val() == "FREE") && (codePvz == null)) {
+                    layer.msg("Пожалуйста, выберите пункт выдачи заказа!",false,999999);
+                    return false;
+                }
+
+
+                if ($("#payselect").val() == "") { //判断商品是否存在
 					layer.msg("Выберите способ оплаты!");
 					return false;
                 }
@@ -918,7 +988,7 @@ $(function() {
                 $.ajax({
                     url: "${base}/cart/orderVal",
                     type: 'post',
-                    data: {'cartIds': cartIds},
+                    data: {'cartIds': cartIds,'codePvz':codePvz},
                     dataType: 'json',
                     success: function (data) {
                         if (data.success) {
@@ -984,6 +1054,8 @@ $(function() {
             var shipping_Fee = $("input[name=shippingFee]").val();
             var parcel = $("input[name=parcel]").val();
 
+            var codePvz = $(".list-pvz").val();
+
             $.ajax({
                 url: "${base}/cart/addOrder",
                 type: 'post',
@@ -998,7 +1070,8 @@ $(function() {
                     "isPd": isPd,
                     'activityIds': '${activityIds}',
                     'shippingFee': shipping_Fee,
-                    'parcel': parcel
+                    'parcel': parcel,
+                    'codePvz': codePvz
                 },
                 dataType: 'json',
                 success: function (data) {
@@ -1085,13 +1158,81 @@ $(function() {
         });
     }
 
+    function replacingCity(idCity) {
+        var arrayIdFarEastCity = new Array(
+		//Амурская область
+		'14424','896','286','918','13488','14425','33594','32721','13370','14427',
+		'24454','32961','3224','2329','13328','14445','13012','32973','13065',
+		'13936','13447','14426','14423','14422','13013','14428','3229','13396',
+		'13064','1763','16577','13937','13294','318','13395','24418','13931',
+		'32145','24403','1760','14792',
+		//Саха-Якутия
+		'2989','502','16078','1420','13962','13963','31507','1418','13964','14831',
+		'13426','1427','13965','19','13984','1428','33316','13966','1465','1415',
+		'13967','33489','32900','13968','32968','1416','1422','33454','2995',
+		'1462','2994','891','13969','1423','892','14556','14832','13144','13970',
+		'1429','1425','13971','13003','33114','1488','1421','23003','2990','2991',
+		'31930','13972','33507','1426','31989','893','1417','13973','1298','13974',
+		'13975','13474','13976','33074','24401','13977','2992','1424','1464',
+		'2993','13473','1419','15224','15195','283',
+		//Сахалинская область
+		'14668','14552','16267','23832','33329','22966','32058','23974','32743',
+		'32152','13960','13436','13563','32869','32135','24000','56','31577',
+		'14977','31278','14420','30969','3216','2997','16509','23822','2399',
+		'2996','31652','16268','14978','14554','23926','31067','14555','16076',
+		'14553','14551','68','13425','13007','473',
+		//Камчатский край
+		'32134','31350','13087','407','2543','31815','13074','13076','895','2544',
+		'13075','13086','31352','31816','3205','31351','894','13084','13078',
+		'31819','31353','3214','13079','30996','13081','31355','31348','14545',
+		'16041','13082','285','2542','13071','13085','2545','31817','16071','33584',
+		'13080','13083','14546','31300','13073','14550','13564','31354','13077',
+		'13072','31349','14544','31818',
+		//Приморский край
+		'14565','2379','53','13282','904','288','2380','16101','1853','24327','128',
+		'500','32641','24361','13060','1148','2378','24363','16456','13448','1074',
+		'13429','31667','13449','2868','14558','13442','14560','13283','33017',
+		'13284','16954','2377','2869','31168','2398','13440','2870','23831','501',
+		'24362','14299','32760','23821','23668','14298','13100','33318','14301',
+		'33533','31006','13439','33590','14564','2394','33167','31491','14561',
+		'2375','14295','907','31177','31492','33602','13441','14302','14297','14563',
+		'14976','15081','2871','2872','14296','2376','24326','33109','13285','16404',
+		'13443','31511','13099','31391','13279','2873','13280','955','906','31120',
+		'14559','14303','14300','2874','14557','14294','13306','14566','14562','13281',
+		//Хабаровский край
+		'900','1438','3121','14547','13866','13410','31396','14969','13147','29','13863',
+		'13935','2363','13862','30968','32153','14900','902','33098','14973','31333',
+		'1266','31990','3122','13673','3123','903','13861','31279','14970','16931','13867',
+		'14897','14898','31714','31806','13438','14901','14975','14971','2372','1487','32232',
+		'15569','14899','899','13115','31733','23661','13864','30967','2373','3124',
+		'32792','23862','31541','22990','13398','13148','14972','31539','287','14974',
+		'13865','24337','13500','16929','31540','13432','31228','13672','14291',
+		//Еврейская АО
+		'23919','32147','914','32985','31584','14548','31934','14336',
+		'1295','1106','13618','14549','13613','23886',
+		//Магаданская область
+		'24406','33166','314','31959','2738','2741','31258','2743','13142','32034',
+		'2739','13143','2740','2744','2347','2742','2745','15896',
+		//Чукотский АО
+		'2381','3163','32068','15801','14671','32998','3164',
+		'3166','13149','3162','3165'
+		);
+
+        if (arrayIdFarEastCity.indexOf(idCity) > -1 ) {
+            idCity = idCity + ',farEastCity';
+        } else {
+            idCity = idCity + ',otherCity';
+        }
+        return idCity;
+    }
+
     //计算应付金额
     function getTotalPrice() {
         var couponId = "";
         //获取优惠券信息
         var couponMember = $("#couponMember");
 
-        var cityId = $('#city_id').val();
+        var cityId = replacingCity($('#city_id').val());
 
         //运费信息
         var freight = $('#shipselect').val();
@@ -1419,5 +1560,4 @@ $(function() {
     };
 
 </script>
-</body>
-<@p.newfooter />
+</body> 
