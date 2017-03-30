@@ -22,20 +22,31 @@
         processCost();
         $(".list-pvz").val('${order.shippingExpressCode}');
         init_list_pvz();
-//        $(".list-pvz").val('${order.shippingExpressCode}');
-//        alert($(".list-pvz").val());
+        calc_order_cdek();
     };
 
     function processCost() {
         $("#costParcel").val($("#costGoods").val());
-        $("#payment").val($("#costGoods").val());
-        $("#deliveryRecipientCost").val(parseFloat($("#costCDEK").val()) + 20 + 0.03 * parseFloat($("#payment").val()));
+        /*
+        //Самовывоз
+        if ($("#radio_136").prop("checked")==true){
+            $("#payment").val(0);
+        }
+        //Доставка курьером
+        if ($("#radio_137").prop("checked")==true){
+            $("#payment").val(parseFloat($("#costGoods").val()) + parseFloat($("#costCDEK").val()));
+        }
+
+        //$("#deliveryRecipientCost").val(parseFloat($("#costCDEK").val()) + 20 + 0.03 * parseFloat($("#payment").val()));
 
         if (parseFloat($("#payment").val()) < 3000) {
             $("#deliveryRecipientCost").val(parseFloat($("#costCDEK").val()) + 20 + 0.03 * parseFloat($("#payment").val()));
         } else {
             $("#deliveryRecipientCost").val(0);
         }
+        */
+        $("#payment").val(0);
+        $("#deliveryRecipientCost").val(0);
     }
     function splitaddress(splitString) {
         tempArray = splitString.split(',');
@@ -49,6 +60,12 @@
         $("#lengthParcel").val(tempArray[1]);
         $("#widthParcel").val(tempArray[2]);
         $("#heightParcel").val(tempArray[3]);
+        if (tempArray[0] == '0' || tempArray[1] == '0' || tempArray[2] == '0' || tempArray[3] == '0') {
+            $("#weightParcel").val('1');
+            $("#lengthParcel").val('35');
+            $("#widthParcel").val('23');
+            $("#heightParcel").val('13');
+        }
     }
     function processaddress() {
         $("#address").val($("#address1").val() + "," + $("#address2").val() + "," + $("#address3").val());
@@ -145,6 +162,7 @@
     <input type="hidden" name="parcel" id="parcel" value="${order.tradeSn}">
     <input type="hidden" name="order_Id" id="order_Id" value="${order.orderId}">
     <input type="hidden" name="curNameGoods" id="curNameGoods" value="">
+    <input type="hidden" name="shopBarterId" id="shopBarterId" value="${shopBarterId}">
 
     <form method="post" action="" id="make_order_cdek" target="_parent">
         <div class="row-fluid">
@@ -176,8 +194,8 @@
                             <div class="col-xs-2">
                                 <div class="required"><em class="pngFix"></em>*Тариф:</div>
                                 <p>
-                                    <input type="radio" id="radio_136" name="group_tarif" value="136"> Склад-Склад<br>
-                                    <input type="radio" id="radio_137" name="group_tarif" value="137" checked> Склад-Дверь<br>
+                                    <input type="radio" id="radio_136" name="group_tarif" value="136" onchange="processCost();"> Склад-Склад<br>
+                                    <input type="radio" id="radio_137" name="group_tarif" value="137" onchange="processCost();" checked> Склад-Дверь<br>
                                 </p>
                             </div>
                             <div class="col-xs-6">
@@ -371,10 +389,14 @@
                         </button>
                     </div>
                     <div class="col-xs-4">
-                        <button type="button" class="btn btn-sm btn-danger">
+                        <button type="button" class="btn btn-sm btn-danger" id="enable-btn-make">
                             <a href="#none" onclick="make_order_cdek()" style="color: white">Создать заказ СДЭК</a>
                         </button>
+                        <button type="button" class="btn btn-sm btn-danger" id="disable-btn-make" style="display: none;">
+                            <a href="#none" onclick="" style="color:white;">Пожалуйста, подождите ...</a>
+                        </button>
                     </div>
+
                     <div class="col-xs-2">
                         <button type="button" class="btn btn-sm btn-info">
                             <a href="#none" onClick="quxiao();return false;" style="color: white">OK</a>
@@ -504,7 +526,7 @@
                     required: 'Заполните, пожалуйста, адрес'
                 }
             }
-        })
+        });;
 
 
     function quxiao() {
@@ -522,12 +544,18 @@
 
     function make_order_cdek() {
         if ($('#make_order_cdek').valid()) {
+
+            if (cityId == '' || cityId == '0') {
+                layer.msg("Пожалуйста, выберите город!",false,999999);
+                return false;
+            }
             var orderId = $("input[name='order_Id']").val();
             var trueName = $('#trueName').val();
             var mobPhone = $('#mobPhone').val();
             var cityId = $('#city_id').val();
             var zipCode = $('#zipCode').val();
             var address = $('#address').val();
+            var shopBarterId = $('#shopBarterId').val();
             //alert("adress = " + address);
 
             var commentParcel = $('#commentParcel').val();
@@ -547,6 +575,7 @@
             var tariffId = getTarif();
             //codePvz after tariffId
             var $codePvz = $(".list-pvz");
+
             if((($codePvz.val()== null)||($codePvz.val()== '')) && $("#radio_136").prop("checked")==true){
                 layer.msg("Пожалуйста, выберите пункт выдачи заказа!",false,999999);
                 return false;
@@ -556,15 +585,10 @@
                 return false;
             }
 
-            if ((($codePvz.val()!= null)||($codePvz.val()!= '')) && (address == ',,') ) {
-                layer.msg("Адрес получателя не указан! Будет взят адрес пункта выдачи заказа!",false,999999);
-                alert($codePvz.val());
+            if ((($codePvz.val()!= null)||($codePvz.val()!= '')) && (address == ',,') && $("#radio_137").prop("checked")==true ) {
+                layer.msg("Адрес получателя не указан! Пожалуйста выберите тариф Склад-Склад!",false,999999);
             }
 
-            if (cityId == '' || cityId == '0') {
-                layer.msg("Пожалуйста, выберите город!",false,999999);
-                return false;
-            }
 
             var formjson = '{';
             formjson += '\"orderId\":\"' + orderId + '\",';
@@ -589,8 +613,11 @@
             formjson += '\"deliveryRecipientCost\":\"' + deliveryRecipientCost + '\"';
             formjson += '\"tariffId\":\"' + tariffId + '\"';
             formjson += '\"codePvz\":\"' + $codePvz.val() + '\"';
+            formjson += '\"shopBarterId\":\"' + shopBarterId + '\"';
 
             formjson += '}';
+            $("#enable-btn-make").hide();
+            $("#disable-btn-make").show();
 
             $.ajax({
                 url: '${base}/cdek/makeorder',
@@ -600,16 +627,21 @@
                 success: function (data) {
                     if (data.success == 'true') {
                         parent.layer.msg('Запрос успешно выполнен', {icon: 1}, returnOK(data.cdekNumber));
+                        $("#disable-btn-make").hide();
+                        $("#enable-btn-make").show();
                         setTimeout(function () {
                             parent.location.reload();
                             //parent.layer.closeAll();
-                        }, 2000)
+                        }, 1000)
                     } else {
                         parent.layer.msg('Выполнить этот запрос не удалось' + data.errorMessage, {icon: 2});
+                        $("#disable-btn-make").hide();
+                        $("#enable-btn-make").show();
                     }
                 }, error: function (data) {
-                    console.log(data.data);
                     parent.layer.msg('Сбой связи', {icon: 2});
+                    $("#disable-btn-make").hide();
+                    $("#enable-btn-make").show();
                 }
             });
         }
@@ -687,14 +719,14 @@
             minimumInputLength: 0,
             minimumResultsForSearch: 10,
             ajax: {
-                url: '/cdek/allpvz?cityId=' + cityId,
+                url: '${base}/cdek/allpvz?cityId=' + cityId,
                 dataType: "json",
                 type: "GET",
                 data: function (params) {
 
                     var queryParameters = {
                         term: params.term
-                    }
+                    };;
                     return queryParameters;
                 },
                 processResults: function (data) {
